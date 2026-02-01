@@ -1,149 +1,219 @@
-function createGameboard() {
-  const gameboard = [];
+function createPlayer(name, marker) {
+  let score = 0;
 
-  const winPattern = {
-    0: [0, 1, 2],
-    1: [3, 4, 5],
-    2: [6, 7, 8],
-    3: [0, 3, 6],
-    4: [1, 4, 7],
-    5: [2, 5, 8],
-    6: [0, 4, 8],
-    7: [2, 4, 6],
-  };
-
-  function showBoard() {
-    console.log(gameboard);
+  function getScore() {
+    return score;
   }
 
+  function increaseScore() {
+    score++;
+  }
+
+  return { name, marker, getScore, increaseScore };
+}
+
+const gameboard = (() => {
+  const board = [];
+
+  const winPattern = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+
   function getBoard() {
-    return gameboard;
+    return board;
+  }
+
+  function resetBoard() {
+    board.splice(0, board.length);
   }
 
   function isSquareOpen(index) {
-    return gameboard.at(index) === undefined;
+    return board.at(index) === undefined;
   }
 
   function setMarker(index, marker) {
-    gameboard[index] = marker;
-  }
-
-  function getWinCondition() {
-    return winPattern;
+    board[index] = marker;
   }
 
   return {
-    showBoard,
+    winPattern,
     getBoard,
-    setMarker,
+    resetBoard,
     isSquareOpen,
-    getWinCondition,
+    setMarker,
   };
-}
+})();
 
-function createPlayer(name, marker) {
-  const moves = [];
+const gameController = (() => {
+  let moves = 0;
+  let isOver = false;
+  let winner = null;
 
-  function getMoves() {
+  let players = {};
+
+  function setPlayers(p1name, p2name) {
+    players.p1 = createPlayer(p1name, "O");
+    players.p2 = createPlayer(p2name, "X");
+  }
+
+  const increaseMoveCount = () => moves++;
+
+  function getMoveCount() {
     return moves;
   }
 
-  function setMove(index) {
-    moves.push(index);
+  function resetMoves() {
+    moves = 0;
+  }
+
+  function getCurrentPlayer() {
+    return getMoveCount() % 2 === 0 ? players.p1 : players.p2;
+  }
+
+  function hasEnded() {
+    return getMoveCount() >= 9 || isOver ? true : false;
+  }
+
+  function setHasEnded(state) {
+    isOver = state;
+  }
+
+  function setWinner(player) {
+    winner = player;
+  }
+
+  function getWinner() {
+    return winner;
+  }
+
+  function hasWinner() {
+    const winConditions = gameboard.winPattern;
+    const currentBoard = gameboard.getBoard();
+    return winConditions.some((pattern) => {
+      return pattern.every((square) => {
+        return currentBoard.at(square) === getCurrentPlayer().marker;
+      });
+    });
+
+    // Leaving explicitly stated return keywords for familiarization.
+    // The return block above can be shortened to the following in the future:
+    //
+    // return winConditions.some((pattern) =>
+    //   pattern.every((square) => currentBoard[square] === player.marker),
+    // );
+  }
+
+  function playMove(square) {
+    let player = getCurrentPlayer();
+    if (gameboard.isSquareOpen(square) && !hasEnded()) {
+      gameboard.setMarker(square, player.marker);
+      if (hasWinner()) {
+        setHasEnded(true);
+        setWinner(player);
+      }
+      increaseMoveCount();
+    }
   }
 
   return {
-    name,
-    marker,
-    getMoves,
-    setMove,
+    hasEnded,
+    hasWinner,
+    playMove,
+    setHasEnded,
+    getWinner,
+    setWinner,
+    setPlayers,
+    resetMoves,
   };
-}
-
-const player1 = createPlayer("John", "O");
-const player2 = createPlayer("Jane", "X");
-console.log(player1.marker);
-console.log(player2.marker);
-
-const game = (() => {
-  let moveCount = 0;
-  const board = createGameboard();
-
-  function getMoveCount() {
-    return moveCount;
-  }
-
-  function increaseMoveCount() {
-    moveCount++;
-  }
-
-  function isWon(player) {
-    console.log("Checking for winner");
-    const wincon = board.getWinCondition();
-    const currentBoard = board.getBoard();
-    for (key in wincon) {
-      if (
-        wincon[key].every((square) => currentBoard[square] === player.marker)
-      ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function isOver() {
-    return getMoveCount() >= 9 ? true : false;
-  }
-
-  function playerMove(index, player) {
-    if (isOver()) {
-      return "The game has ended. You can no longer play any moves.";
-    }
-
-    if (index >= 9) {
-      return "Index out of bounds";
-    }
-
-    if (!board.isSquareOpen(index)) {
-      return "Square has been taken";
-    }
-
-    board.setMarker(index, player.marker);
-    player.setMove(index);
-    increaseMoveCount();
-    console.log(
-      `The players have moved: ${getMoveCount()} ${getMoveCount() < 2 ? "move" : "moves"}`,
-    );
-
-    if (getMoveCount() >= 5) {
-      console.log(`Did this player win? ${isWon(player)}`);
-    }
-
-    return "Move accepted";
-  }
-
-  return { playerMove, isWon };
 })();
 
-// WIN CHECK
-// console.log(game.playerMove(1, player1));
-// console.log(game.playerMove(6, player2));
-// console.log(game.playerMove(2, player1));
-// console.log(game.playerMove(7, player2));
-// console.log(game.playerMove(4, player1));
-// console.log(game.playerMove(8, player2));
+const displayController = (() => {
+  const BOARD_SIZE = 9;
+  const boardUI = document.querySelector(".board");
 
-// GAME END CHECK
-console.log(game.playerMove(0, player1));
-console.log(game.playerMove(1, player2));
-console.log(game.playerMove(2, player1));
-console.log(game.playerMove(3, player2));
-console.log(game.playerMove(5, player1));
-console.log(game.playerMove(4, player2));
-console.log(game.playerMove(6, player1));
-console.log(game.playerMove(8, player2));
-console.log(game.playerMove(7, player1));
+  const playersFormDialog = document.querySelector(".ui-form-dialog");
+  const btnPlayersFormSubmit = document.querySelector(".players-form__submit");
+  const player1StatsName = document.querySelector(".player1-stats__name");
+  const player2StatsName = document.querySelector(".player2-stats__name");
 
-// SQUARE UNAVAILABLE / OUT OF BOUNDS CHECK
-console.log(game.playerMove(8, player2));
-console.log(game.playerMove(9, player2));
+  const btnNewGame = document.querySelector(".btn-new-game");
+
+  (() => {
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      const square = document.createElement("div");
+      square.classList.add("board__square");
+      square.setAttribute("data-square", i);
+      boardUI.appendChild(square);
+    }
+  })();
+
+  function showPlayersForm() {
+    playersFormDialog.showModal();
+  }
+  showPlayersForm();
+
+  function showBoard() {
+    const squares = Array.from(document.querySelectorAll(".board__square"));
+    const currentBoard = gameboard.getBoard();
+    squares.forEach((square, index) => {
+      square.textContent = currentBoard[index];
+    });
+  }
+
+  function resetBoard() {
+    const squares = Array.from(document.querySelectorAll(".board__square"));
+    squares.forEach((square, index) => {
+      square.textContent = "";
+    });
+  }
+
+  function handleMove(e) {
+    if (e.target.hasAttribute("data-square")) {
+      let square = e.target.getAttribute("data-square");
+      if (gameController.hasEnded()) {
+        alert(`Game has ended`);
+        return;
+      }
+      gameController.playMove(square);
+      showBoard();
+      if (gameController.getWinner()) {
+        alert(`${gameController.getWinner().name} WINS!`);
+        console.log(gameController.getWinner().name);
+      }
+    }
+  }
+
+  function handleReset() {
+    gameboard.resetBoard();
+    gameController.setWinner(null);
+    gameController.setHasEnded(false);
+    gameController.resetMoves();
+
+    player1StatsName.textContent = "Player 1";
+    player2StatsName.textContent = "Player 2";
+    resetBoard();
+    showPlayersForm();
+  }
+
+  btnPlayersFormSubmit.addEventListener("click", (e) => {
+    let p1 = document.querySelector("#player1").value;
+    let p2 = document.querySelector("#player2").value;
+    player1StatsName.textContent = p1;
+    player2StatsName.textContent = p2;
+
+    gameController.setPlayers(p1, p2);
+
+    playersFormDialog.close();
+    e.preventDefault();
+  });
+
+  boardUI.addEventListener("click", handleMove);
+  btnNewGame.addEventListener("click", handleReset);
+})();

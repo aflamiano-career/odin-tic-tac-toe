@@ -3,10 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Odin Tic-Tac-Toe</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="reset.css" />
     <script src="src/script.js" defer></script>
   </head>
-  <body></body>
+  <body>
+    <h1>TIC-TAC-TOE</h1>
+    <dialog class="ui-form-dialog">
+      <form action="/" method="post" class="players-form">
+        <ul>
+          <li>
+            <label for="player1">Player 1</label>
+            <input type="text" id="player1" name="player1Name" />
+          </li>
+          <li>
+            <label for="player2">Player 2</label>
+            <input type="text" id="player2" name="player2Name" />
+          </li>
+        </ul>
+        <button type="submit" class="players-form__submit">Play</button>
+      </form>
+    </dialog>
+    <div>
+      <div class="player1-stats">
+        <h2 class="player1-stats__name">Player 1</h2>
+      </div>
+      <div class="player2-stats">
+        <h2 class="player2-stats__name">Player 2</h2>
+      </div>
+    </div>
+    <main class="board"></main>
+    <div>
+      <button type="button" class="btn-new-game">New game</button>
+    </div>
+  </body>
 </html>
